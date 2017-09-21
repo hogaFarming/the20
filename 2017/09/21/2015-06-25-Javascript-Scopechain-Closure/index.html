@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.2" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.2" />
+
+
+
+
+
+
+<meta name="description" content="很多编程语言都有代码块，在大部分编程语言中的代码块都有相应的“变量作用域”。 变量指在代码块中声明的变量，所谓变量作用域即可以访问该变量的“代码区域”，如Java： {      int a = 10; }  int b = a + 10; // error: a cannot be resolved to a variable  代码块内声明的变量，在代码块之外是不可见，即访问不到的，这就是“">
+<meta property="og:type" content="article">
+<meta property="og:title" content="深入理解Javascript作用域链和闭包">
+<meta property="og:url" content="http://yoursite.com/2017/09/21/2015-06-25-Javascript-Scopechain-Closure/index.html">
+<meta property="og:site_name" content="the20">
+<meta property="og:description" content="很多编程语言都有代码块，在大部分编程语言中的代码块都有相应的“变量作用域”。 变量指在代码块中声明的变量，所谓变量作用域即可以访问该变量的“代码区域”，如Java： {      int a = 10; }  int b = a + 10; // error: a cannot be resolved to a variable  代码块内声明的变量，在代码块之外是不可见，即访问不到的，这就是“">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://yoursite.com/2017/09/21/2015-06-25-Javascript-Scopechain-Closure/!--￼0--%3E/assets/images/jsc-1.png">
+<meta property="og:image" content="http://yoursite.com/2017/09/21/2015-06-25-Javascript-Scopechain-Closure/!--￼1--%3E/assets/images/jsc-2.png">
+<meta property="og:image" content="http://yoursite.com/2017/09/21/2015-06-25-Javascript-Scopechain-Closure/!--￼2--%3E/assets/images/jsc-3.png">
+<meta property="og:updated_time" content="2017-09-21T14:55:06.515Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="深入理解Javascript作用域链和闭包">
+<meta name="twitter:description" content="很多编程语言都有代码块，在大部分编程语言中的代码块都有相应的“变量作用域”。 变量指在代码块中声明的变量，所谓变量作用域即可以访问该变量的“代码区域”，如Java： {      int a = 10; }  int b = a + 10; // error: a cannot be resolved to a variable  代码块内声明的变量，在代码块之外是不可见，即访问不到的，这就是“">
+<meta name="twitter:image" content="http://yoursite.com/2017/09/21/2015-06-25-Javascript-Scopechain-Closure/!--￼0--%3E/assets/images/jsc-1.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '5.1.2',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2017/09/21/2015-06-25-Javascript-Scopechain-Closure/"/>
+
+
+
+
+
+  <title>深入理解Javascript作用域链和闭包 | the20</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">the20</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/09/21/2015-06-25-Javascript-Scopechain-Closure/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="hoga">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="the20">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">深入理解Javascript作用域链和闭包</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-09-21T22:55:45+08:00">
+                2017-09-21
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><img src="!--￼0--&gt;/assets/images/jsc-1.png" alt="scope chain"></p>
+<p>很多编程语言都有代码块，在大部分编程语言中的代码块都有相应的“变量作用域”。</p>
+<p>变量指在代码块中声明的变量，所谓变量作用域即可以访问该变量的“代码区域”，如Java：</p>
+<pre><code class="java">{ 
+    <span class="keyword">int</span> a = <span class="number">10</span>;
+} 
+<span class="keyword">int</span> b = a + <span class="number">10</span>; <span class="comment">// error: a cannot be resolved to a variable</span>
+</code></pre>
+<p>代码块内声明的变量，在代码块之外是不可见，即访问不到的，这就是“块级作用域”。 </p>
+<a id="more"></a>
+<p>在Javascript中也有相似的语法，和其他语言不同的是，它并没有相应的块级作用域： </p>
+<pre><code class="javascript"><span class="keyword">if</span> (<span class="literal">true</span>) { 
+    <span class="keyword">var</span> a = <span class="number">10</span> 
+} 
+<span class="keyword">var</span> b = a + <span class="number">10</span> <span class="comment">// -&gt; 20</span>
+</code></pre>
+<p>在Javascript程序中，只有函数function才产生相应的变量作用域（ES6中有所改变）： </p>
+<pre><code class="javascript"><span class="keyword">var</span> a = <span class="number">1</span> 
+<span class="function"><span class="keyword">function</span> <span class="title">add</span>(<span class="params"></span>) </span>{ 
+    <span class="keyword">var</span> b = a + <span class="number">1</span> <span class="comment">// -&gt;2 </span>
+} 
+add() 
+<span class="keyword">var</span> c = b <span class="comment">// error:b is not defined</span>
+</code></pre>
+<p>上面例子中，函数内声明的局部变量<code>b</code>，在函数返回后是访问不到的；另一方面，函数体内可以直接访问到外部的变量<code>a</code>。</p>
+<p>##作用域链</p>
+<p><strong>执行环境</strong>（execution context）是Javascript中最为重要的一个概念，顾名思义即执行一段Javascript代码时的环境。我们知道Javascript最外层有一个全局对象Global，在浏览器中可以认为是window对象；类似地，每个函数都有自己的执行环境，并且有一个与之关联的<strong>变量对象</strong>（variable object），它保存着当前环境定义的变量和函数。</p>
+<p>当程序执行调用函数时，会进入相应的执行环境，并创建一个作用域链，作用域链的前端是该环境的变量对象，往前是上一个执行环境的变量对象，当前环境的变量对象也称作<strong>活动对象</strong>（activation object），程序就是通过这条作用域链来检索变量的，这叫<strong>变量解析</strong>。</p>
+<p>在程序执行过程中，一个新的函数被创建时，这个函数会有一个<strong>[[scope]]</strong>属性，它指向当前环境的作用域链，这样当我们调用这个函数时，就能通过这个属性顺利创建一个新的作用域链。</p>
+<p><img src="!--￼1--&gt;/assets/images/jsc-2.png" alt="scope chain"></p>
+<p><img src="!--￼2--&gt;/assets/images/jsc-3.png" alt="scope chain"></p>
+<p>##闭包</p>
+<p>理解了变量作用域链的的概念后，再来看闭包就很容易了。各种文献对闭包的解释是比较抽象的，</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/09/21/2015-06-10-Intro-of-Using-SublimeText3/" rel="next" title="Sublime Text 3使用介绍">
+                <i class="fa fa-chevron-left"></i> Sublime Text 3使用介绍
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/09/21/2015-06-12-Github-Jekyll-Blog/" rel="prev" title="Github + Jekyll搭建博客">
+                Github + Jekyll搭建博客 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+
+      <section class="site-overview sidebar-panel sidebar-panel-active">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          
+            <p class="site-author-name" itemprop="name">hoga</p>
+            <p class="site-description motion-element" itemprop="description"></p>
+        </div>
+
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+            
+              <a href="/archives/">
+            
+                <span class="site-state-item-count">4</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">hoga</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+  <span class="post-meta-divider">|</span>
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">NexT.Gemini</a> v5.1.2</div>
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.2"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.2"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.2"></script>
+
+
+
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
+
+
+  
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
